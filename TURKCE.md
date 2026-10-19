@@ -23,10 +23,13 @@ resmî ReSkate sürümünde olmadığı için yamayla birlikte değiştirilmiş 
 4. `reskate-strings.json` dosyasını `%LOCALAPPDATA%\ReSkate\` klasörüne koyun (Windows Gezgini'nin
    adres çubuğuna `%LOCALAPPDATA%\ReSkate` yazıp Enter'a basarak açabilirsiniz).
 5. ReSkate başlatıcısında **Settings** (Ayarlar) bölümünde **Install ReSkate updates** seçeneğinin işaretini kaldırın.
+   (Türkçe başlatıcıda: **AYARLAR → GELİŞMİŞ → ReSkate güncellemelerini kur**.)
    Kapatmazsanız başlatıcı resmî `ReSkate.dll` dosyasını geri yükler ve Türkçe kaybolur.
 6. İsteğe bağlı: aynı yerden çökme raporlarını (crash reports) da kapatabilirsiniz; bu DLL resmî
    olmadığı için ReSkate geliştiricilerine rapor göndermesi onların işine yaramaz.
 7. Oyunu başlatın. Yazılar Türkçe görünmelidir.
+8. İsteğe bağlı: sürümdeki `ReSkateLauncher.exe` dosyasını da aynı klasöre kopyalarsanız başlatıcı da
+   Türkçe olur: Windows Türkçeyse kendiliğinden, değilse **Settings → ADVANCED → Language → Türkçe** ile.
 
 ## Geri alma
 
