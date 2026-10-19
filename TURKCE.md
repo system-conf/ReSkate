@@ -1,12 +1,13 @@
-# ReSkate Türkçe Yama (resmi değil)
+# ReSkate Türkçe Yama (resmî değil)
 
-skate. için ReSkate'e Türkçe arayüz yazıları getiren, gayriresmî bir çeviri. Bu ilk sürüm
-menüleri, butonları ve arayüz yazılarını kapsıyor; diyaloglar ve diğer metinler sonraki
-sürümlerde gelecek.
+skate. için ReSkate'e Türkçe arayüz getiren, gayriresmî bir çeviri. Bu ilk sürüm oyundaki menüleri,
+butonları ve arayüz yazılarını (ilk tur, yaklaşık 9.200 metin) ve ReSkate başlatıcısını (739 metin)
+kapsıyor. Diyaloglar, uzun metinler ve oyun içi ReSkate menüsü (Insert) henüz çevrilmedi.
 
-Çeviri, ReSkate'in `reskate-strings.json` özelliğiyle yükleniyor: oyunun kendi metinlerinin yerine
-geçen bir dosya (bkz. [contrib/text-overrides.md](contrib/text-overrides.md)). Bu özellik henüz
-resmî ReSkate sürümünde olmadığı için yamayla birlikte değiştirilmiş bir `ReSkate.dll` geliyor.
+Oyun içi çeviri, ReSkate'in `reskate-strings.json` özelliğiyle yükleniyor: oyunun kendi metinlerinin
+yerine geçen bir dosya (bkz. [contrib/text-overrides.md](contrib/text-overrides.md)). Bu özellik ve
+başlatıcının dil desteği henüz resmî ReSkate sürümünde olmadığı için yamayla birlikte değiştirilmiş
+`ReSkate.dll` ve `ReSkateLauncher.exe` geliyor. Not: bu DLL'de Spotify entegrasyonu yok.
 
 ## Gereksinimler
 
@@ -17,25 +18,27 @@ resmî ReSkate sürümünde olmadığı için yamayla birlikte değiştirilmiş 
 ## Kurulum
 
 1. Oyunu ve ReSkate başlatıcısını kapatın.
-2. ReSkate klasöründeki (`Skate.exe` ile aynı yerdeki) `ReSkate.dll` dosyasının bir yedeğini alın,
-   örneğin adını `ReSkate.dll.yedek` yapın.
-3. Sürümdeki (release) `ReSkate.dll` dosyasını aynı klasöre kopyalayın.
+2. ReSkate klasöründeki (`Skate.exe` ve `ReSkateLauncher.exe` dosyalarının olduğu yer)
+   `ReSkateLauncher.exe` ve `ReSkate.dll` dosyalarını yedekleyin, örneğin adlarının sonuna `.yedek`
+   ekleyin.
+3. Zip'teki `ReSkateLauncher.exe` ve `ReSkate.dll` dosyalarını aynı klasöre kopyalayın.
 4. `reskate-strings.json` dosyasını `%LOCALAPPDATA%\ReSkate\` klasörüne koyun (Windows Gezgini'nin
    adres çubuğuna `%LOCALAPPDATA%\ReSkate` yazıp Enter'a basarak açabilirsiniz).
-5. ReSkate başlatıcısında **Settings** (Ayarlar) bölümünde **Install ReSkate updates** seçeneğinin işaretini kaldırın.
-   (Türkçe başlatıcıda: **AYARLAR → GELİŞMİŞ → ReSkate güncellemelerini kur**.)
-   Kapatmazsanız başlatıcı resmî `ReSkate.dll` dosyasını geri yükler ve Türkçe kaybolur.
-6. İsteğe bağlı: aynı yerden çökme raporlarını (crash reports) da kapatabilirsiniz; bu DLL resmî
-   olmadığı için ReSkate geliştiricilerine rapor göndermesi onların işine yaramaz.
+5. Başlatıcıyı açın. Ayarlar'da (Settings) **ReSkate güncellemelerini kur** (Install ReSkate updates)
+   seçeneğinin işaretini kaldırın. Kaldırmazsanız başlatıcı resmî dosyaları geri yükler ve Türkçe
+   kaybolur.
+6. İsteğe bağlı: **Çökme raporları gönder** (Send crash reports) seçeneğini de kapatabilirsiniz; bu
+   dosyalar resmî olmadığı için raporlar ReSkate geliştiricilerinin işine yaramaz.
 7. Oyunu başlatın. Yazılar Türkçe görünmelidir.
-8. İsteğe bağlı: sürümdeki `ReSkateLauncher.exe` dosyasını da aynı klasöre kopyalarsanız başlatıcı da
-   Türkçe olur: Windows Türkçeyse kendiliğinden, değilse **Settings → ADVANCED → Language → Türkçe** ile.
+
+Başlatıcının dili: Windows Türkçeyse kendiliğinden Türkçe açılır. Değilse **AYARLAR → GELİŞMİŞ →
+Dil → Türkçe** (Settings → ADVANCED → Language).
 
 ## Geri alma
 
-1. Oyunu kapatın.
-2. Yedeklediğiniz `ReSkate.dll` dosyasını geri koyun (veya başlatıcıda ReSkate güncellemelerini
-   tekrar açın; başlatıcı resmî DLL'i indirir).
+1. Oyunu ve başlatıcıyı kapatın.
+2. Yedeklediğiniz `ReSkateLauncher.exe` ve `ReSkate.dll` dosyalarını geri koyun (veya başlatıcıda
+   ReSkate güncellemelerini tekrar açın; başlatıcı resmî dosyaları indirir).
 3. `%LOCALAPPDATA%\ReSkate\reskate-strings.json` dosyasını silin.
 
 ## Uyarı
@@ -46,5 +49,6 @@ deponun Issues bölümüne bildirin. Kullanım riski size aittir.
 
 ## Kaynak kodu
 
-ReSkate GPLv3 lisanslıdır. Sürümdeki `ReSkate.dll`, bu deponun `turkce` dalından derlenmiştir;
-kaynak kodunun tamamı burada. Çeviri dosyası `contrib/translation-tr/reskate-strings.json`.
+ReSkate GPLv3 lisanslıdır. Sürümdeki `ReSkate.dll` ve `ReSkateLauncher.exe`, bu deponun `turkce`
+dalından derlenmiştir; kaynak kodunun tamamı burada. Oyun çevirisi
+`contrib/translation-tr/reskate-strings.json`, başlatıcı çevirisi `Launcher/languages/tr.json`.
