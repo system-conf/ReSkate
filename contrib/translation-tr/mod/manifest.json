@@ -1,0 +1,7 @@
+{
+    "name": "ReSkate_Turkce",
+    "version_number": "1.0.0",
+    "website_url": "",
+    "description": "skate. menüleri ve HUD'u için Türkçe çeviri (ReSkate eklentisi). Turkish translation of skate.'s menus and HUD, as a ReSkate plugin.",
+    "dependencies": []
+}
