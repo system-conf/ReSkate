@@ -571,6 +571,17 @@ int strings_exists(lua_State* L) {
     else lua_pushnil(L);
     return 1;
 }
+// strings.set_case_rules(rules): "tr" makes the text the game capitalizes itself (an upper-case
+// heading) follow Turkish rules, i to U+0130 and I to U+0131, while the plugin is loaded; "" or nil gives the
+// game's rules back. True, or false and why not.
+int strings_set_case_rules(lua_State* L) {
+    auto& plugin = allowed(L, "strings", "reskate.strings.set_case_rules");
+    std::size_t length = 0;
+    const char* rules = luaL_optlstring(L, 1, "", &length);
+    const std::string_view name(rules, length);
+    if (name != "tr" && !name.empty()) luaL_error(L, "reskate.strings.set_case_rules: the rules are \"tr\" or \"\"");
+    return result(L, game_of(plugin).strings_case_rules(plugin.id(), name));
+}
 // strings.hash(id): the id's "#xxxxxxxx" key, as a dump of the game's text names the strings whose
 // id it does not know. Needs no permission: it only computes.
 int strings_hash(lua_State* L) {
@@ -596,6 +607,7 @@ void install_services_api(Plugin&, lua_State* L) {
                                  {"find", find_tuning}, {"tune", tune}});
     add_functions(L, "tricks", {{"feed", trick_feed}, {"gesture", gesture}, {"label", label}, {"record_as", record_as}});
     add_functions(L, "mods", {{"content", content}, {"read_content", read_content}});
-    add_functions(L, "strings", {{"set", strings_set}, {"set_many", strings_set_many}, {"exists", strings_exists}, {"hash", strings_hash}});
+    add_functions(L, "strings", {{"set", strings_set}, {"set_many", strings_set_many}, {"exists", strings_exists}, {"hash", strings_hash},
+                                {"set_case_rules", strings_set_case_rules}});
 }
 } // namespace dingosdk::plugins

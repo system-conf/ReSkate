@@ -39,8 +39,23 @@ void release(std::string_view owner);
 // Game thread: whether the game has text for the key (in the store or the database); nullopt
 // before the store is checked, or when it differs from the supported build.
 std::optional<bool> exists(std::string_view key);
+// Casing rules for the text the UI capitalizes itself (a style's Uppercase, Lowercase, Title or
+// Reverse): "tr" (Turkish and Azerbaijani) uppercases i to dotted I (U+0130) and lowercases I
+// to dotless i (U+0131), as the game's own mapping (localization.h case_convert) has no language rules; "" is
+// the game's mapping again. Game thread. The rules hold while any owner that asked for them is
+// loaded (release gives them up); the hook is installed at the next tick after the first asks.
+// Empty when taken, else why not.
+std::string set_case_rules(std::string_view owner, std::string_view rules);
+// What the Turkish rules make of one character `source` that the game's mapping in `mode`
+// (localization.h case_lower or case_upper) turned into `converted`.
+constexpr char16_t turkish_case(char16_t source, char16_t converted, int mode) noexcept {
+    if (mode == 2 && source == u'i' && converted == u'I') return char16_t{0x130};
+    if (mode == 1 && source == u'I' && converted == u'i') return char16_t{0x131};
+    return converted;
+}
 // Game thread, every client tick (after apply_throwdown_strings): stores what changed, 256
 // texts a tick, so a whole translation is no hitch. Text is stored once a database is loaded,
-// and all of it again when another database loads (another language).
+// and all of it again when another database loads (another language). Also installs the casing
+// hook once casing rules are asked for.
 void apply_text_overrides(std::uintptr_t base) noexcept;
 } // namespace dingosdk::text_overrides

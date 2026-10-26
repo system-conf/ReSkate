@@ -486,6 +486,9 @@ public:
     }
     // Whether the game has text for the key; nullopt when it cannot say.
     virtual std::optional<bool> string_exists(std::string_view /*key*/) { return std::nullopt; }
+    // The casing rules the UI's own capitalization follows while the plugin is loaded: "tr" (i to U+0130,
+    // I to U+0131), or "" for the game's. Empty when taken, else why not.
+    virtual std::string strings_case_rules(std::string_view /*plugin*/, std::string_view /*rules*/) { return unavailable; }
     // ---- content: a folder of every enabled mod, as the plugin's manifest names it ("content") -------
     struct ContentFile {
         std::string mod, title; // the mod's folder name and its own name

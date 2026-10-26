@@ -1,4 +1,5 @@
 #include "text_overrides.h"
+#include "Engine/Core/Hooks/hooks.h"
 #include "Engine/Core/Log/logging.h"
 #include "Engine/Core/Platform/memory.h"
 #include "Engine/Game/Build/addresses.h"
@@ -6,6 +7,7 @@
 #include <Windows.h>
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <charconv>
 #include <cstring>
 #include <deque>
@@ -50,6 +52,9 @@ struct State {
     Address database{}; // the one the texts were last stored against
     bool again{};       // store them all once more at the next check (see apply_text_overrides)
     unsigned stored{}, tried{};
+    // The owners that asked for Turkish casing, and the hook that applies it.
+    std::set<std::string, std::less<>> turkish_owners;
+    enum class CaseHook { none, installed, refused } case_hook{};
 };
 State& state() { static auto* value = new State; return *value; }
 
@@ -67,6 +72,75 @@ std::string id_of(std::string_view key) {
     const auto parsed = std::from_chars(digits.data(), digits.data() + digits.size(), hash, 16);
     if (digits.empty() || digits.size() > 8 || parsed.ec != std::errc{} || parsed.ptr != digits.data() + digits.size()) return {};
     return id_for_hash(hash);
+}
+
+// ---- casing: the UI's own capitalization, with Turkish rules when a plugin asks ----
+using CaseConvert = std::uint32_t (*)(const char16_t* source, std::size_t length, char16_t* target, std::size_t capacity,
+                                      int mode, const char* locale);
+CaseConvert original_convert{};
+std::atomic<bool> turkish{};
+
+// Called on whichever thread lays out UI text. Without the rules, or in a mode other than lower or
+// upper (title and reverse case come back here one character at a time), the game converts alone.
+std::uint32_t case_convert_hook(const char16_t* source, std::size_t length, char16_t* target, std::size_t capacity, int mode,
+                                const char* locale) {
+    if (!turkish.load(std::memory_order_relaxed) || (mode != loc::case_lower && mode != loc::case_upper) || !source || !target)
+        return original_convert(source, length, target, capacity, mode, locale);
+    const char16_t changed = mode == loc::case_upper ? u'i' : u'I';
+    if (std::find(source, source + length, changed) == source + length)
+        return original_convert(source, length, target, capacity, mode, locale);
+    // The target may be the source, so the source is kept to see which characters were i or I.
+    std::array<char16_t, 512> small{};
+    std::vector<char16_t> large;
+    const char16_t* kept = small.data();
+    if (length <= small.size()) {
+        std::copy_n(source, length, small.begin());
+    } else {
+        try { large.assign(source, source + length); } catch (...) { return original_convert(source, length, target, capacity, mode, locale); }
+        kept = large.data();
+    }
+    const auto result = original_convert(kept, length, target, capacity, mode, locale);
+    // The game writes target[k] for source[k] while k is within the capacity, less a terminator's.
+    const std::size_t terminator = !locale || !*locale ? 1 : 0;
+    const auto written = std::min(length, capacity > terminator ? capacity - terminator : 0);
+    for (std::size_t k = 0; k < written; ++k) target[k] = turkish_case(kept[k], target[k], mode);
+    return result;
+}
+
+// The converter and its tables as this build has them: i uppercases to I and dotless i to I,
+// dotted I lowercases to i.
+bool case_convert_matches(Address base) noexcept {
+    try {
+        return code_matches(base + loc::case_convert.rva, loc::case_convert.bytes) &&
+               read<std::uint16_t>(base + loc::case_upper_table + 2 * 0x69) == 0x49 &&
+               read<std::uint16_t>(base + loc::case_upper_table + 2 * 0x131) == 0x49 &&
+               read<std::uint16_t>(base + loc::case_lower_table + 2 * 0x130) == 0x69;
+    } catch (...) { return false; }
+}
+void install_case_hook(State& s, Address base) {
+    s.case_hook = State::CaseHook::refused;
+    if (!case_convert_matches(base)) {
+        logging::write(logging::Level::warning, logging::Channel::ui,
+            "Strings: the game's text casing differs from the supported build; Turkish casing is off.");
+        return;
+    }
+    auto* target = reinterpret_cast<void*>(base + loc::case_convert.rva);
+    if (hook_prepare(target, reinterpret_cast<void*>(&case_convert_hook), reinterpret_cast<void**>(&original_convert)) != HookOk) {
+        logging::write(logging::Level::warning, logging::Channel::ui, "Strings: the text casing hook could not be prepared.");
+        return;
+    }
+    {
+        HookBatch hooks;
+        if (hook_enable(target) != HookOk) {
+            logging::write(logging::Level::warning, logging::Channel::ui, "Strings: the text casing hook could not be installed.");
+            return;
+        }
+    }
+    s.case_hook = State::CaseHook::installed;
+    logging::write(logging::Level::info, logging::Channel::ui, "Strings: Turkish casing (i to \xc4\xb0, I to \xc4\xb1) installed.");
+}
+void update_casing(const State& s) {
+    turkish.store(!s.turkish_owners.empty(), std::memory_order_relaxed);
 }
 } // namespace
 
@@ -139,8 +213,25 @@ std::string set(std::string_view owner, const std::vector<std::pair<std::string,
     return {};
 }
 
+std::string set_case_rules(std::string_view owner, std::string_view rules) {
+    auto& s = state();
+    if (rules != "tr" && !rules.empty()) return "casing rules are \"tr\" or \"\"";
+    if (rules.empty()) {
+        if (const auto found = s.turkish_owners.find(owner); found != s.turkish_owners.end()) s.turkish_owners.erase(found);
+    } else {
+        if (s.refused || s.case_hook == State::CaseHook::refused) return "the game's text casing differs from the supported build";
+        s.turkish_owners.emplace(owner);
+    }
+    update_casing(s);
+    return {};
+}
+
 void release(std::string_view owner) {
     auto& s = state();
+    if (const auto found = s.turkish_owners.find(owner); found != s.turkish_owners.end()) {
+        s.turkish_owners.erase(found);
+        update_casing(s);
+    }
     const auto held = s.held.find(owner);
     if (held == s.held.end()) return;
     s.held.erase(held);
@@ -184,6 +275,8 @@ void apply_text_overrides(Address base) noexcept {
                 s.base = base;
                 s.verified = true;
             }
+            // Installed only once a plugin asks, so the game's casing is untouched otherwise.
+            if (!s.turkish_owners.empty() && s.case_hook == State::CaseHook::none) install_case_hook(s, base);
             // Stored before a database is loaded, the text would be kept empty. A new database
             // (another language) needs it all stored again; so does the check after that, since
             // apply_throwdown_strings stores its own text again for the new database too and

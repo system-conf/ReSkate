@@ -1392,6 +1392,9 @@ public:
         return text_overrides::set(plugin, texts);
     }
     std::optional<bool> string_exists(std::string_view key) override { return text_overrides::exists(key); }
+    std::string strings_case_rules(std::string_view plugin, std::string_view rules) override {
+        return text_overrides::set_case_rules(plugin, rules);
+    }
     // A trick recorded as another changes the score: not while a throwdown runs, as trick replacements.
     std::string trick_record_as(std::string_view plugin, std::vector<std::uint32_t> from, std::uint32_t to, int within_ms) override {
         if (multiplayer::local_throwdown_active()) return "not while a throwdown runs";
