@@ -261,6 +261,19 @@ int main() {
     for (const auto& entry : mods::scan_mods(game).entries)
         if (entry.mod.name == "Deep_Mod")
             check(entry.mod.park_maps == std::vector<std::string>{"bam", "grom"}, "Park maps are listed");
+    // A plugin-only mod has something to load (the Mods page does not warn about it); an empty one has not,
+    // and a reskate-plugin.json without an entry is no plugin.
+    write(mods / L"Plugin_Only" / L"reskate-plugin.json", R"({"entry":"plugin/main.lua","permissions":[]})");
+    write(mods / L"Nothing_Here" / L"manifest.json", R"({"name":"Nothing_Here"})");
+    write(mods / L"Nothing_Here" / L"reskate-plugin.json", R"({"permissions":[]})");
+    bool plugin_has_content = false, empty_has_content = true, empty_is_plugin = true;
+    for (const auto& entry : mods::scan_mods(game).entries) {
+        if (entry.mod.name == "Plugin_Only") plugin_has_content = entry.mod.provides_plugin && mods::has_content(entry.mod);
+        if (entry.mod.name == "Nothing_Here") empty_has_content = mods::has_content(entry.mod), empty_is_plugin = entry.mod.provides_plugin;
+    }
+    check(plugin_has_content && !empty_has_content && !empty_is_plugin, "A plugin-only mod has content, an empty folder has none");
+    std::filesystem::remove_all(mods / L"Plugin_Only");
+    std::filesystem::remove_all(mods / L"Nothing_Here");
     make_zip(sources / L"parkmod.zip", {{"My Park/manifest.json", R"({"name":"My Park"})"},
                                         {"My Park/parks/bam.park.json", "{}"}});
     check(install(mods, sources / L"parkmod.zip") == "My Park", "A park mod (manifest.json only) installs");

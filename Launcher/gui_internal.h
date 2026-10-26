@@ -703,9 +703,12 @@ std::vector<const thunderstore::Package*> updates(const Store& store, const thun
 void start_store_install(ModsPanel& panel, std::vector<thunderstore::Package> packages);
 // The package's icon texture, or empty while it loads; uploads finished icons.
 ImTextureID package_icon(ModsPanel& panel, const thunderstore::Package& package);
-// That icon drawn at `position`, or a placeholder square while it loads or
-// when the mod never came from Thunderstore.
-void mod_icon(ModsPanel& panel, const thunderstore::Package* package, ImVec2 position, float size);
+// The icon.png in an installed mod's folder, for a mod the listing does not have.
+ImTextureID folder_icon(ModsPanel& panel, const std::filesystem::path& folder);
+// That icon drawn at `position` (else the one in `folder`, when given), or a placeholder
+// square while it loads or when there is none.
+void mod_icon(ModsPanel& panel, const thunderstore::Package* package, ImVec2 position, float size,
+    const std::filesystem::path& folder = {});
 void pump_icons(ModsPanel& panel);
 // The GET MODS page body, under the page header.
 void browse_page(Launcher& launcher, const Fonts& fonts, ModsPanel& panel, float height, bool installing);

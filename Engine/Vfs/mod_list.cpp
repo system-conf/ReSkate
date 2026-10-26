@@ -188,14 +188,15 @@ void read_resident(Mod& mod, std::vector<std::string>& notes) {
     }
 }
 
-// reskate-plugin.json's "variants" (Variants). A malformed one is a note, and the mod has no variants:
-// it loads as any other mod.
+// reskate-plugin.json's "variants" (Variants), and whether it names code to run (provides_plugin). A malformed
+// one is a note, and the mod has no variants: it loads as any other mod.
 void read_variants(Mod& mod, std::vector<std::string>& notes) {
     const auto path = mod.directory / plugin_manifest_file;
     std::error_code error;
     if (!fs::is_regular_file(path, error) || error) return;
     try {
         const auto root = parse(path, maximum_plugin_bytes);
+        mod.provides_plugin = root.is_object() && root.contains("entry") && root.at("entry").is_string();
         if (!root.is_object() || !root.contains("variants")) return;
         const auto& declared = root.at("variants");
         if (!declared.is_object() || !declared.contains("folder")) throw std::runtime_error("variants names its folder");
@@ -475,6 +476,11 @@ Mod describe_mod(const std::filesystem::path& directory, std::string name, std::
     read_variants(mod, notes);
     read_studio_marker(mod);
     return mod;
+}
+
+bool has_content(const Mod& mod) {
+    return mod.provides_layout || mod.provides_levels || !mod.park_maps.empty() || mod.provides_plugin ||
+           mod.variants.has_value();
 }
 
 bool resident_root(const Mod& mod, std::string_view bundle, std::string_view name) noexcept {

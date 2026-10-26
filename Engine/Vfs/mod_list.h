@@ -76,6 +76,7 @@ struct Mod {
     std::filesystem::path directory;
     bool provides_layout{};           // has layout.toc, so it becomes a layout layer
     bool provides_levels{};           // has reskate-levels.json
+    bool provides_plugin{};           // its reskate-plugin.json names Luau code to run (an "entry")
     // Base maps it ships a park for: parks/<map>.park.json (park editor mods).
     std::vector<std::string> park_maps;
     // Presentation, from manifest.json (or reskate-mod.json). `title` falls back to the folder
@@ -153,6 +154,9 @@ struct ModList {
 // shader block depot entry `name` is in that bundle, or null.
 bool resident_root(const Mod& mod, std::string_view bundle, std::string_view name) noexcept;
 const ResidentAssets::Shader* resident_shader(const Mod& mod, std::string_view bundle, std::string_view name) noexcept;
+
+// Whether the game finds anything in the mod to load: game data, maps, parks, a plugin or variants.
+bool has_content(const Mod& mod);
 
 // Folder names travel into engine paths, so only plain ASCII is accepted:
 // letters, digits, space, '_', '-' and '.', not starting with '.'.
