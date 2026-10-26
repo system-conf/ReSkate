@@ -46,6 +46,7 @@ add_library(dingosdk_runtime SHARED
     Extension/Multiplayer/Hud/native_party_hooks.cpp
     Extension/Multiplayer/Hud/native_party_requests.cpp
     Extension/Throwdowns/native_throwdowns.cpp
+    Extension/Localization/text_overrides.cpp
     Extension/Throwdowns/native_type_scan.cpp
     Extension/Throwdowns/throwdown_lab.cpp
     Extension/Throwdowns/native_flag_session.cpp

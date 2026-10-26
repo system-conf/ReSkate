@@ -18,6 +18,7 @@
 #include "Extension/Skater/skater_events.h"
 #include "Extension/Skater/outfit_overlay.h"
 #include "Extension/Skater/board_pose.h"
+#include "Extension/Localization/text_overrides.h"
 #include "Engine/Vfs/mod_catalog.h"
 #include "Engine/Core/Log/logging.h"
 #include <mutex>
@@ -1387,6 +1388,10 @@ public:
     std::string trick_label(std::string_view plugin, std::string_view from, std::string_view to) override {
         return trick_rewrite::label(plugin, from, to);
     }
+    std::string strings_set(std::string_view plugin, const std::vector<std::pair<std::string, std::string>>& texts) override {
+        return text_overrides::set(plugin, texts);
+    }
+    std::optional<bool> string_exists(std::string_view key) override { return text_overrides::exists(key); }
     // A trick recorded as another changes the score: not while a throwdown runs, as trick replacements.
     std::string trick_record_as(std::string_view plugin, std::vector<std::uint32_t> from, std::uint32_t to, int within_ms) override {
         if (multiplayer::local_throwdown_active()) return "not while a throwdown runs";
@@ -1538,6 +1543,7 @@ public:
         if (pad_flight_owner_ == plugin) (void)pad_flight(plugin, false);
         if (competition_owner_ == plugin) competition(plugin, false);
         stop_clip(plugin);
+        text_overrides::release(plugin);
         plugin_sound::stop_all(plugin);
         outfit_overlay::clear(plugin);
         item_browser::release_owner(plugin);

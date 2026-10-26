@@ -45,6 +45,7 @@
 #include "Extension/Skater/client_source_spawn.h"
 #include "Extension/Skater/skater_slot_override.h"
 #include "Extension/Throwdowns/native_throwdowns.h"
+#include "Extension/Localization/text_overrides.h"
 #include "Extension/Skater/bone_cam.h"
 #include "Extension/Skater/pad_flight.h"
 #include "Extension/Trainer/trainer.h"
@@ -571,6 +572,7 @@ void update_model(std::uintptr_t client, TickState& frame) {
     dingosdk::job_spin::apply_default();
     apply_mesh_streaming_pool(state);
     dingosdk::multiplayer::apply_throwdown_strings(r.base);
+    dingosdk::text_overrides::apply_text_overrides(r.base);
     const bool named_context_ready = (state == 13 || state == 21) && native_context_ready();
     {
         std::lock_guard lock(r.mutex);

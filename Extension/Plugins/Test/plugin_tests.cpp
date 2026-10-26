@@ -9,6 +9,7 @@
 #include "Extension/Throwdowns/custom_modes.h"
 #include "Extension/Throwdowns/throwdown_kit.h"
 #include "Engine/Vfs/mod_list.h"
+#include "Extension/Localization/text_overrides.h"
 #include <algorithm>
 #include <chrono>
 #include <format>
@@ -102,6 +103,16 @@ struct FakeGame final : Game {
     std::string trick_label(std::string_view plugin, std::string_view from, std::string_view to) override {
         calls.push_back(std::format("trick label {} {}={}", plugin, from, to));
         return {};
+    }
+    std::map<std::string, std::string> strings; // "<plugin> <key>" -> text
+    std::string strings_set(std::string_view plugin, const std::vector<std::pair<std::string, std::string>>& texts) override {
+        calls.push_back(std::format("strings {} {} {}={}", plugin, texts.size(), texts.empty() ? "" : texts[0].first,
+                                    texts.empty() ? "" : texts[0].second));
+        for (const auto& [key, text] : texts) strings[std::format("{} {}", plugin, key)] = text;
+        return {};
+    }
+    std::optional<bool> string_exists(std::string_view key) override {
+        return std::any_of(strings.begin(), strings.end(), [&](const auto& s) { return s.first.ends_with(" " + std::string(key)); });
     }
     std::string trick_record_as(std::string_view plugin, std::vector<std::uint32_t> from, std::uint32_t to, int within_ms) override {
         std::string ids;
@@ -803,6 +814,13 @@ void a_permission_must_be_declared() {
         assert(not ok and err:find("needs the \"skater.control\" permission"), err)
         ok, err = pcall(reskate.mods.content, "parks")
         assert(not ok and err:find("needs the \"mods.read\" permission"), err)
+        ok, err = pcall(reskate.strings.set, "ID_MENU_PLAY", "Play")
+        assert(not ok and err:find("needs the \"strings\" permission"), err)
+        ok, err = pcall(reskate.strings.set_many, {ID_MENU_PLAY = "Play"})
+        assert(not ok and err:find("needs the \"strings\" permission"), err)
+        ok, err = pcall(reskate.strings.exists, "ID_MENU_PLAY")
+        assert(not ok and err:find("needs the \"strings\" permission"), err)
+        assert(reskate.strings.hash("ID_MENU_PLAY"):sub(1, 1) == "#", "a hash is computed freely")
         reskate.console.print("never")
     )")});
     stopped(host, "bare", "raised an error");
@@ -2603,6 +2621,44 @@ void rock_to_fakie_relabels_and_records_the_stall() {
     check(!game.called("trick record"), "B outside a stall asks nothing\n" + environment.all());
 }
 
+// reskate.strings: the text the game shows for its ids, by id or by #hash; checked before the game
+// gets it, and given back when the plugin unloads.
+void plugins_change_the_games_text() {
+    TestEnvironment environment;
+    auto& game = environment.fake;
+    Host host(environment, Side::client);
+    host.apply({script("words", R"(
+        reskate.log("hash " .. reskate.strings.hash("ID_MENU_PLAY"))
+        assert(reskate.strings.set("ID_MENU_PLAY", "Oyna"))
+        assert(reskate.strings.set("#00ab12CD", "\u{c7}\u{131}k"))
+        local n = reskate.strings.set_many({_about = "notes", ID_A = "Bir", ["#ff"] = "\u{130}ki"})
+        assert(n == 2, n)
+        assert(reskate.strings.exists("ID_A") == true and reskate.strings.exists("ID_NONE") == false, "exists")
+        assert(not pcall(reskate.strings.set, "#xyz", "a"), "a bad hash")
+        assert(not pcall(reskate.strings.set, "#123456789", "a"), "a hash of 9 digits")
+        assert(not pcall(reskate.strings.set, "two words", "a"), "an id has no spaces")
+        assert(not pcall(reskate.strings.set, "ID_B", "\xff"), "not UTF-8")
+        assert(not pcall(reskate.strings.set, "ID_B", "a\0b"), "a NUL")
+        assert(not pcall(reskate.strings.set, "ID_B", string.rep("a", 512)), "512 units are too many")
+        assert(reskate.strings.set("ID_B", string.rep("\u{15f}", 511)), "511 two-byte characters fit")
+        assert(not pcall(reskate.strings.set_many, {ID_C = 1}), "a text is a string")
+        assert(not pcall(reskate.strings.set_many, {"x"}), "keys are ids")
+        assert(not pcall(reskate.strings.set_many, {ID_C = "c", ["bad id"] = "d"}), "one bad pair refuses all")
+        reskate.log("strings fine")
+    )", R"("strings")")});
+    running(host, "words", environment);
+    check(environment.logged("[words] strings fine"), "The strings API checks what it is given\n" + environment.all());
+    check(environment.logged(std::format("[words] hash #{:08x}", dingosdk::text_overrides::string_hash("ID_MENU_PLAY"))),
+          "A hash is the game's id hash\n" + environment.all());
+    check(game.called("strings words 1 ID_MENU_PLAY=Oyna") && game.called("strings words 1 #00ab12CD="), "Each text reaches the game");
+    check(game.called("strings words 2 ") && !game.strings.contains("words _about"), "set_many leaves notes out");
+    check(!game.strings.contains("words ID_C"), "and takes nothing of a table with a bad pair");
+    check(dingosdk::text_overrides::string_hash("") == 0xffffffffU && dingosdk::text_overrides::string_hash("a") == 0xffffffffU * 33 + 'a',
+          "The hash starts from 0xffffffff and takes h * 33 + byte");
+    host.apply({});
+    check(std::find(game.released.begin(), game.released.end(), "words") != game.released.end(), "Unloading gives its text back");
+}
+
 // Shared content: a plugin names a folder in its manifest's "content" and reads it in every enabled
 // mod; other folders, and the field without mods.read, are refused.
 void a_plugin_reads_the_content_folder_it_names() {
@@ -3562,6 +3618,7 @@ int main() {
         run(road_rash_marks_the_skater_as_it_bails);
         run(dual_stick_edits_the_companions_settings);
         run(rock_to_fakie_relabels_and_records_the_stall);
+        run(plugins_change_the_games_text);
         run(a_plugin_reads_the_content_folder_it_names);
         run(board_break_snaps_the_board_on_a_slam);
         run(fpv_drone_flies_and_follows);

@@ -137,6 +137,7 @@ commands and a `Test/` folder.
 | `Console/` | built-in console commands, perf commands, memory ledger |
 | `Customization/` | cosmetics catalog, item browser, local customization, player card |
 | `Multiplayer/` | Steam lobbies, sessions, parties, voice and text chat (see below) |
+| `Localization/` | the game's text as plugins change it (`reskate.strings`): the string-override store |
 | `Music/` | local music, playlists and artwork, external players: Spotify, YouTube Music, Plex |
 | `News/` | launcher/game news feed |
 | `Objects/` | object placement and the Park Editor (`ParkEditor/`), park object sets, park mods |
