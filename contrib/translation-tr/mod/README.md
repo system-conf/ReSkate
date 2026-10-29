@@ -1,11 +1,12 @@
 # ReSkate Türkçe
 
-skate. oyununun menüleri ve HUD'u için ReSkate Türkçe çevirisi.
+skate. oyununun menüleri, HUD'u, görevleri ve diyalogları için ReSkate Türkçe çevirisi. Oyundaki metinlerin yaklaşık %94'ü (19.448 metin) Türkçe; başlıklar doğru Türkçe büyük harfle yazılır (DİL, PARTİ SOHBETİ).
 
 ## Kurulum
 
-Başlatıcıdaki **GET MODS** sayfasından kurun ya da bu klasörü oyunun `Mods` klasörüne koyup
-başlatıcının mod listesinden açın.
+1. Başlatıcıda **MOD BUL** (GET MODS) sayfasından **ReSkate_Turkce**'yi kurun.
+2. Oyun ilk açılışta eklentinin ne yapacağını sorar (oyunun metinlerini değiştirmek): **Turn on** deyin.
+3. Oyunun metin dili **English** kalmalı; çeviri İngilizce metinlerin üzerine yazılır.
 
 ## Nasıl çalışır
 
@@ -18,7 +19,11 @@ Modu kapatırsanız Türkçe metinler oyun yeniden başlayana kadar kalır.
 
 ## Gereksinimler
 
-Eklenti API'sinde `strings` iznini destekleyen bir ReSkate sürümü.
+ReSkate **2.1.3** veya üstü (`reskate.strings` API'si 2.1.3 ile geldi).
+
+Hata veya çeviri önerisi: https://github.com/system-conf/ReSkate/issues
+
+Gayriresmî bir hayran çevirisidir; EA ve Full Circle ile bağlantısı yoktur.
 
 ---
 
@@ -26,8 +31,8 @@ Eklenti API'sinde `strings` iznini destekleyen bir ReSkate sürümü.
 
 Turkish translation of skate.'s menus and HUD for ReSkate.
 
-- **Install:** from the launcher's **GET MODS**, or put this folder in the game's `Mods` folder and
-  switch it on in the launcher's mod list.
+- **Install:** from the launcher's **GET MODS**; allow the plugin when the game asks. Keep the game's text language on English.
+- **Requires:** ReSkate 2.1.3 or later.
 - **How it works:** a ReSkate plugin with the `strings` permission. It reads `data/strings.json`
   and hands the texts to the game with `reskate.strings.set_many`; any string the file lacks keeps
   the game's own text. Switching the mod off leaves the Turkish text until the game restarts.
